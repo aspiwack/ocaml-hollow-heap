@@ -1,5 +1,19 @@
+module type S = sig
 
-(** http://cs.au.dk/~tdh/papers/Hollow-heaps.pdf *)
+  type key
+  type 'a item
+  type 'a t
+
+  val get : 'a item -> 'a
+
+  val create : unit -> 'a t
+  val insert : 'a t -> key -> 'a -> 'a item
+  val merge : 'a t -> 'a t -> unit
+  val find_min : 'a t -> 'a item option
+  val delete_min : 'a t -> unit
+  val decrease_key : 'a t -> 'a item -> key -> unit
+
+end
 
 module Make (Ord:Map.OrderedType) = struct
 
@@ -13,23 +27,27 @@ module Make (Ord:Map.OrderedType) = struct
 
     type 'a t = {
       mutable elt : 'a item holloption;
-      (* Children are mutable in particular to allow dag-shaped
-         heaps. May possibly be improved by "inlining" the list as two
-         field "child" and "next" both of type ['a t] as described in
-         Section 6 of the original article. *)
+      (** Children are mutable in particular to allow dag-shaped
+          heaps. May possibly be improved by "inlining" the list as
+          two field "child" and "next" both of type ['a t] as
+          described in Section 6 of the original article. *)
       mutable children : 'a t list;
-      (* [rank] is used to guide the linking strategy during
-         deletes. It is a non-negative int. *)
+      (** [rank] is used to guide the linking strategy during
+          deletes. It is a non-negative int. *)
       mutable rank : int;
-      (* [sp] is the "second parent" of this node if it has one
-         (second parents are inserted by {!link_above}, itself called in
-         {!decrease_key}).*)
+      (** [sp] is the "second parent" of this node if it has one
+          (second parents are inserted by {!link_above}, itself called
+          in {!decrease_key}).*)
       mutable sp : 'a t option;
     }
     and 'a item = { self: 'a ; mutable node: 'a t}
 
-    (* Used as a temporary place-holder for [make]. *)
-    let dummy_node = { elt = Hollow ; children = [] ; rank = 0 ; sp = None }
+    (** Used as a temporary place-holder for {!make}. *)
+    (* TODO: producing a new value each time a node is inserted is
+       safe, but presumably slow. It is probably desirable to use
+       unsafe features (beware of not breaking flambda though) for the
+       sake of efficiency. *)
+    let dummy_node () = { elt = Hollow ; children = [] ; rank = 0 ; sp = None }
 
     let make_with ?(rank=0) k xi =
       let u = { elt = Full (k,xi); children = [] ; rank ; sp = None } in
@@ -37,7 +55,7 @@ module Make (Ord:Map.OrderedType) = struct
       u
 
     let make k x =
-      let xi = { self = x ; node = dummy_node } in
+      let xi = { self = x ; node = dummy_node () } in
       xi, make_with k xi
 
     let link u v =
@@ -89,7 +107,9 @@ module Make (Ord:Map.OrderedType) = struct
       (* Remark: applies only to that the root. It is an invariant of nodes
          the root is always full.*)
       match u.elt with
-      | Full (_,xi) -> u.elt <- Full (k,xi)
+      | Full (k0,xi) ->
+        assert (k0 >= k);
+        u.elt <- Full (k,xi)
       | _ -> assert false
 
     let decrease_key ({ node=u } as xi) k h =
@@ -204,7 +224,8 @@ module Make (Ord:Map.OrderedType) = struct
       h1 := Some (Node.merge u v);
       h2 := None
 
-  let find_min = function
+  let find_min h =
+    match !h with
     | None -> None
     | Some u -> Some (Node.find_min u)
 
@@ -213,7 +234,7 @@ module Make (Ord:Map.OrderedType) = struct
     | None -> ()
     | Some u -> h := Node.delete_min u
 
-  let decrease_key xi k h =
+  let decrease_key h xi k =
     match !h with
     | None -> assert false
     | Some u -> h := Some (Node.decrease_key xi k u)
