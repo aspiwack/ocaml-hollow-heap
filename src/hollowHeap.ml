@@ -23,6 +23,9 @@ module Make (Ord:Map.OrderedType) = struct
     | Full of key * 'a
     | Hollow
 
+  (** Non-empty heaps are in the form of a rooted dag (where each node
+      has at most two parent). The module [Node] implements the logic
+      for non-empty heap. Only [delete_min] is not straightforward. *)
   module Node = struct
 
     type 'a t = {
@@ -40,7 +43,13 @@ module Make (Ord:Map.OrderedType) = struct
           in {!decrease_key}).*)
       mutable sp : 'a t option;
     }
+    (** ['a item] point back to the node which hold them. They are
+        used by {!decrease_key} to find the node whose key to
+        decrease. It is an invariant that [xi.node] always point back
+        to the unique node which contains [xi]. *)
     and 'a item = { self: 'a ; mutable node: 'a t}
+
+    (** {6 Helper functions} *)
 
     (** Used as a temporary place-holder for {!make}. *)
     (* TODO: producing a new value each time a node is inserted is
@@ -49,15 +58,21 @@ module Make (Ord:Map.OrderedType) = struct
        sake of efficiency. *)
     let dummy_node () = { elt = Hollow ; children = [] ; rank = 0 ; sp = None }
 
+    (** Creates and returns a new node with item [xi] in it. Enforces
+        the invariant that [xi] points back to that node. *)
     let make_with ?(rank=0) k xi =
       let u = { elt = Full (k,xi); children = [] ; rank ; sp = None } in
       let () = xi.node <- u in
       u
 
+    (** Creates a new node with a fresh [item]. Returns both the node
+        and the item. *)
     let make k x =
       let xi = { self = x ; node = dummy_node () } in
       xi, make_with k xi
 
+    (** Assigns the node of [u] and [v] with the larger key as a child
+        of the other. *)
     let link u v =
       (* Remark: it is an invariant of nodes that the root is always full. *)
       match u.elt , v.elt with
@@ -91,6 +106,20 @@ module Make (Ord:Map.OrderedType) = struct
           u
       | _ -> assert false
 
+    (** Replaces the key of the {e root} [u] of a non-empty heap by
+        [k]. Precondition: [k] must be no larger than the current key of
+        [u]. *)
+    let update_key u k =
+      (* Remark: it is an invariant of nodes the root is always
+         full.*)
+      match u.elt with
+      | Full (k0,xi) ->
+        assert (k0 >= k);
+        u.elt <- Full (k,xi)
+      | _ -> assert false
+
+    (** {6 Heap operations (except delete-min)} *)
+
     let merge = link
 
     let insert u k x =
@@ -98,18 +127,10 @@ module Make (Ord:Map.OrderedType) = struct
       xi , merge u v
 
     let find_min u =
-      (* Remark: it is an invariant of nodes that the root is always full. *)
+      (* Remark: it is an invariant of nodes that the root is always
+         full. *)
       match u.elt with
       | Full (_,xi) -> xi
-      | _ -> assert false
-
-    let update_key u k =
-      (* Remark: applies only to that the root. It is an invariant of nodes
-         the root is always full.*)
-      match u.elt with
-      | Full (k0,xi) ->
-        assert (k0 >= k);
-        u.elt <- Full (k,xi)
       | _ -> assert false
 
     let decrease_key ({ node=u } as xi) k h =
@@ -125,6 +146,8 @@ module Make (Ord:Map.OrderedType) = struct
 
     (** {6 Delete min} *)
 
+    (** A variant of {!link} which updates the [rank]. See the
+        original article for an explanation. *)
     let rank_link u v =
       let w = link u v in
       let () = w.rank <- w.rank + 1 in
