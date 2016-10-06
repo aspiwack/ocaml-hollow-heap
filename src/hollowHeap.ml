@@ -20,15 +20,19 @@ module Make (Ord:Map.OrderedType) = struct
       mutable children : 'a t list;
       (* [rank] is used to guide the linking strategy during
          deletes. It is a non-negative int. *)
-      mutable rank : int
+      mutable rank : int;
+      (* [sp] is the "second parent" of this node if it has one
+         (second parents are inserted by {!link_above}, itself called in
+         {!decrease_key}).*)
+      mutable sp : 'a t option;
     }
     and 'a item = { self: 'a ; mutable node: 'a t}
 
     (* Used as a temporary place-holder for [make]. *)
-    let dummy_node = { elt = Hollow ; children = [] ; rank = 0 }
+    let dummy_node = { elt = Hollow ; children = [] ; rank = 0 ; sp = None }
 
     let make_with ?(rank=0) k xi =
-      let u = { elt = Full (k,xi); children = [] ; rank } in
+      let u = { elt = Full (k,xi); children = [] ; rank ; sp = None } in
       let () = xi.node <- u in
       u
 
@@ -62,6 +66,7 @@ module Make (Ord:Map.OrderedType) = struct
         if ku >= kv then
           let () = v.children <- u::v.children in
           let () = u.children <- w::u.children in
+          let () = w.sp <- Some u in
           v
         else
           let () = u.children <- v::u.children in
@@ -97,8 +102,120 @@ module Make (Ord:Map.OrderedType) = struct
         let () = u.elt <- Hollow in
         link_above u v h
 
+
+    (** {6 Delete min} *)
+
+    let rank_link u v =
+      let w = link u v in
+      let () = w.rank <- w.rank + 1 in
+      w
+
+    (** This function is described in Section 6 of the original
+        article. *)
+    let delete_min h =
+      (* Full should be a resizable array, but as a first
+         approximation, since it's in the stdlib, I'm using a hash table
+         instead. *)
+      let full = Hashtbl.create 42 in
+      let merge_left h = function
+        | None -> h
+        | Some u -> link h u
+      in
+      let link_all () =
+        (* There is a lot of useless boxing here. Maybe there is a way
+           to make it shorter. *)
+        Hashtbl.fold (fun _ h acc -> Some (merge_left h acc)) full None
+      in
+      let rec push h =
+        match Hashtbl.find full h.rank with
+        | u ->
+          Hashtbl.remove full h.rank;
+          push (rank_link h u)
+        | exception Not_found ->
+          Hashtbl.add full h.rank h
+      in
+      let rec triage hollow root = function
+        | [] -> hollow
+        | c::rest ->
+          begin match c.elt with
+            | Full _ ->
+              let () = push c in
+              triage hollow root rest
+            | Hollow ->
+              (* TODO: in this presentation, it seems that this could
+                 be simplified: we only need to "reference count" the
+                 parents (since there is at most two parents, we only
+                 need a boolean) instead of keeping a "second parent
+                 pointer". Indeed the two last branch seem to do the
+                 exact same thing. *)
+              match c.sp with
+              | None -> triage (c::hollow) root rest
+              | Some u when u==root -> (* [root] is the second parent *)
+                assert (rest==[]);
+                u.sp <- None;
+                hollow
+              | Some u -> (* [root] is the first parent. *)
+                u.sp <- None;
+                triage hollow root rest
+          end
+      in
+      let rec process_hollow hollow =
+        match hollow with
+        | [] -> link_all ()
+        | h::l ->
+          (* Invariant: the root of [h] is hollow *)
+          let hollow = triage hollow h h.children in
+          process_hollow hollow
+      in
+      let hollow = triage [] h h.children in
+      process_hollow hollow
+
   end
 
-  type 'a t = 'a Node.t option
+  type 'a item = 'a Node.item
+
+  let get { Node.self } = self
+
+  type 'a t = 'a Node.t option ref
+
+  let create () = ref None
+
+  let insert h k x =
+    match !h with
+    | None ->
+      let (xi,u) = Node.make k x in
+      let () = h := Some u in
+      xi
+    | Some v ->
+      let (xi,u) = Node.insert v k x in
+      let () = h := Some u in
+      xi
+
+  let swap r1 r2 =
+    let temp = !r1 in
+    r1 := !r2;
+    r2 := temp
+
+  let merge h1 h2 =
+    match !h1,!h2 with
+    | _ , None -> ()
+    | None , _ -> swap h1 h2
+    | Some u, Some v ->
+      h1 := Some (Node.merge u v);
+      h2 := None
+
+  let find_min = function
+    | None -> None
+    | Some u -> Some (Node.find_min u)
+
+  let delete_min h =
+    match !h with
+    | None -> ()
+    | Some u -> h := Node.delete_min u
+
+  let decrease_key xi k h =
+    match !h with
+    | None -> assert false
+    | Some u -> h := Some (Node.decrease_key xi k u)
 
 end
