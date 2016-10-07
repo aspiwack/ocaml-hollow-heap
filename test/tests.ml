@@ -93,6 +93,19 @@ let heap_invariants =
       | Hollow -> false
   in
 
+  (** full nodes have a single parent. *)
+  let full_node_one_parent h =
+    let rec full_node_one_parent u =
+      let open Node in
+      match u.elt , u.sp with
+      | Full _ , Some _ -> false
+      | _ -> List.for_all full_node_one_parent u.children
+    in
+    match !h with
+    | None -> true
+    | Some u -> full_node_one_parent u
+  in
+
 
   let make ~name inv =
     QCheck.Test.make ~name (arb_ops 300) (fun ops -> inv (RunGlassBox.f ops))
@@ -103,6 +116,7 @@ let heap_invariants =
     make ~name:"No assert failure" (fun _ -> true);
     make ~name:"Heap invariant" heap_invariant;
     make ~name:"Root is full" root_invariant;
+    make ~name:"Full nodes have at most one parent" full_node_one_parent;
   ]
 
 let () =
