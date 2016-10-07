@@ -143,7 +143,7 @@ module Reference = struct
   type key = Key.t
   (** [id] is a unique identifier to ensure that all items are
       distincts. *)
-  type 'a item = { self:'a ; id:int ; heap: 'a t}
+  type 'a item = { self:'a ; id:int ; heap: 'a t; mutable live:bool }
   (** The list is assumed sorted with respect to keys. *)
   and 'a t = (Key.t ref*'a item) list ref
 
@@ -155,6 +155,7 @@ module Reference = struct
   let get_key ({ heap } as xi) =
     let (rk,_) = List.find (fun (_,yi) -> xi == yi) !heap in
     !rk
+  let live { live } = live
 
   let create () = ref []
 
@@ -168,7 +169,7 @@ module Reference = struct
     h := insert_item k xi !h
 
   let insert h k x =
-    let xi = { self=x ; id=gen_sym() ; heap = h } in
+    let xi = { self=x ; id=gen_sym() ; heap = h ; live=true } in
     let () = insert_item h k xi in
     xi
 
@@ -184,7 +185,9 @@ module Reference = struct
   let delete_min h =
     match !h with
     | [] -> ()
-    | _::l -> h := l
+    | (_,xi)::l ->
+      h := l;
+      xi.live <- false
 
   let decrease_key h xi k =
     let (rk,_) = List.find (fun (_,yi) -> xi == yi) !h in

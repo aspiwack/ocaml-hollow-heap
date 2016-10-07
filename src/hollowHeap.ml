@@ -6,6 +6,7 @@ module type S = sig
 
   val get : 'a item -> 'a
   val get_key : 'a item -> key
+  val live : 'a item -> bool
 
   val create : unit -> 'a t
   val insert : 'a t -> key -> 'a -> 'a item
@@ -48,7 +49,7 @@ module Make (Ord:Map.OrderedType) = struct
         used by {!decrease_key} to find the node whose key to
         decrease. It is an invariant that [xi.node] always point back
         to the unique node which contains [xi]. *)
-    and 'a item = { self: 'a ; mutable node: 'a t}
+    and 'a item = { self: 'a ; mutable node: 'a t ; mutable live: bool}
 
     (** {6 Helper functions} *)
 
@@ -69,7 +70,7 @@ module Make (Ord:Map.OrderedType) = struct
     (** Creates a new node with a fresh [item]. Returns both the node
         and the item. *)
     let make k x =
-      let xi = { self = x ; node = dummy_node () } in
+      let xi = { self = x ; node = dummy_node () ; live = true } in
       xi, make_with k xi
 
     (** Assigns the node of [u] and [v] with the larger key as a child
@@ -211,6 +212,16 @@ module Make (Ord:Map.OrderedType) = struct
           let hollow = triage hollow h h.children in
           process_hollow hollow
       in
+      let () =
+        match h.elt with
+        | Full (_,xi) ->
+          (* [xi] is being removed from [h], so it's not live
+             anymore. *)
+          xi.live <- false;
+          (* Free the node to avoid space leaks. *)
+          xi.node <- dummy_node ();
+        | Hollow -> assert false
+      in
       let hollow = triage [] h h.children in
       process_hollow hollow
 
@@ -224,6 +235,8 @@ module Make (Ord:Map.OrderedType) = struct
     match u.Node.elt with
     | Full(k,_) -> k
     | Hollow -> assert false
+
+  let live { Node.live } = live
 
   type 'a t = 'a Node.t option ref
 

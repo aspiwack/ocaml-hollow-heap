@@ -27,6 +27,9 @@ module type S = sig
       previously deleted by {!delete_min}. *)
   val get_key : 'a item -> key
 
+  (** [live xi] returns [true] if [xi] is still in a heap. *)
+  val live : 'a item -> bool
+
   (** [create ()] creates a new, empty, heap. *)
   val create : unit -> 'a t
 
