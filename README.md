@@ -16,7 +16,7 @@ This package is still completely untested.
 
 - [X] Type-checks
 - [X] API & code documentation
-- [ ] Tests & CI
+- [X] Tests & CI
 - [ ] Publish API documentation
 - [ ] Benchmark
 - [ ] Package to Opam
