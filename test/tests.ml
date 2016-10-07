@@ -143,15 +143,19 @@ module Reference = struct
   type key = Key.t
   (** [id] is a unique identifier to ensure that all items are
       distincts. *)
-  type 'a item = { self:'a ; id:int }
+  type 'a item = { self:'a ; id:int ; heap: 'a t}
   (** The list is assumed sorted with respect to keys. *)
-  type 'a t = (Key.t ref*'a item) list ref
+  and 'a t = (Key.t ref*'a item) list ref
 
   let gen_sym =
     let count = ref 0 in
     fun () -> count := !count+1; !count
 
   let get { self } = self
+  let get_key ({ heap } as xi) =
+    let (rk,_) = List.find (fun (_,yi) -> xi == yi) !heap in
+    !rk
+
   let create () = ref []
 
   let insert_item h k xi =
@@ -164,7 +168,7 @@ module Reference = struct
     h := insert_item k xi !h
 
   let insert h k x =
-    let xi = { self=x ; id=gen_sym() } in
+    let xi = { self=x ; id=gen_sym() ; heap = h } in
     let () = insert_item h k xi in
     xi
 

@@ -12,8 +12,8 @@ module type S = sig
 
   (** An ['a item] is essentially an ['a]. It also represents its
       "location" in the heap, so one can decrease its key with
-      {!decrease_key}. It is a mistake to call [decrease_key] on an
-      [item] which was previously deleted by {!delete_min}. *)
+      {!decrease_key}. It is an error to call [decrease_key] on an
+      [item] which has been previously deleted by {!delete_min}. *)
   type 'a item
 
   (** The type of heaps. Note that these are mutable heaps. *)
@@ -21,6 +21,11 @@ module type S = sig
 
   (** [get xi] extract the element contained in [xi]. *)
   val get : 'a item -> 'a
+
+  (** [get_key xi] returns the current [key] associated to [x] in the
+      heap. It is an error to call [get_key xi] if [xi] has been
+      previously deleted by {!delete_min}. *)
+  val get_key : 'a item -> key
 
   (** [create ()] creates a new, empty, heap. *)
   val create : unit -> 'a t

@@ -5,6 +5,7 @@ module type S = sig
   type 'a t
 
   val get : 'a item -> 'a
+  val get_key : 'a item -> key
 
   val create : unit -> 'a t
   val insert : 'a t -> key -> 'a -> 'a item
@@ -218,6 +219,11 @@ module Make (Ord:Map.OrderedType) = struct
   type 'a item = 'a Node.item
 
   let get { Node.self } = self
+
+  let get_key { Node.node=u } =
+    match u.Node.elt with
+    | Full(k,_) -> k
+    | Hollow -> assert false
 
   type 'a t = 'a Node.t option ref
 
