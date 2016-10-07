@@ -1,0 +1,20 @@
+machine:
+  environment:
+    OCAML_VERSION: 4.02.3
+    OPAMYES: 1 # Automatically answer "yes" to every opam question
+    OPAMVERBOSE: 1 # Better error reporting from Opam
+dependencies:
+  override:
+    # Install opam from upstream: the versions of Ubuntu in CircleCI are too old
+    - wget https://raw.github.com/ocaml/opam/master/shell/opam_installer.sh -O - | sh -s /usr/local/bin $OCAML_VERSION
+    # Extra dependencies for tests
+    - opam install ounit qtest
+  cache_directories:
+    - "~/.opam"
+test:
+  override:
+    - eval `opam config env` ; ocamlbuild -classic-display test/tests.byte -- -output-junit-file test-result.xml
+  post:
+    # Report test result in junit format
+    - mkdir -p $CIRCLE_TEST_REPORTS/ounit
+    - cp test-result.xml $CIRCLE_TEST_REPORTS/ounit
