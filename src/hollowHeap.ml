@@ -209,7 +209,7 @@ module Make (Ord:Map.OrderedType) = struct
         | [] -> link_all ()
         | h::l ->
           (* Invariant: the root of [h] is hollow *)
-          let hollow = triage hollow h h.children in
+          let hollow = triage l h h.children in
           process_hollow hollow
       in
       let () =
