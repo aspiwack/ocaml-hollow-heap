@@ -67,6 +67,7 @@ open OUnit2
 let heap_invariants =
   let open GlassBox in
 
+  (** The tree has the min-heap property. *)
   let heap_invariant h =
     let rec heap_inariant_node u k =
       let open Node in
@@ -82,13 +83,26 @@ let heap_invariants =
     | Some u -> heap_inariant_node u min_int
   in
 
+  (** The root is always full. *)
+  let root_invariant h =
+    match !h with
+    | None -> true
+    | Some u ->
+      match u.Node.elt with
+      | Full _ -> true
+      | Hollow -> false
+  in
+
+
   let make ~name inv =
     QCheck.Test.make ~name (arb_ops 300) (fun ops -> inv (RunGlassBox.f ops))
   in
 
+
   "Heap invariants" >::: QCheck_runner.to_ounit2_test_list [
     make ~name:"No assert failure" (fun _ -> true);
     make ~name:"Heap invariant" heap_invariant;
+    make ~name:"Root is full" root_invariant;
   ]
 
 let () =
