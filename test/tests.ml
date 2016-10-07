@@ -39,7 +39,7 @@ let arb_ops n : op list QCheck.arbitrary =
   let print = QCheck.Print.list op_pp in
 QCheck.make ~shrink ~print (gen_ops n)
 
-module Run (H : HollowHeap.S with type key = int) = struct
+module Run (H : HollowHeap.S with type key = Key.t) = struct
 
   let f ops =
     let h = H.create () in
@@ -61,6 +61,7 @@ module RunBlackBox = Run(BlackBox)
 module RunGlassBox = Run(GlassBox)
 
 
+(** {6 Glass-box testing} *)
 
 open OUnit2
 
@@ -135,7 +136,83 @@ let heap_invariants =
     make ~name:"Item back-pointers correct" item_back_pointer;
   ]
 
+(** {6 Black-box testing} *)
+
+module Reference = struct
+
+  type key = Key.t
+  (** [id] is a unique identifier to ensure that all items are
+      distincts. *)
+  type 'a item = { self:'a ; id:int }
+  (** The list is assumed sorted with respect to keys. *)
+  type 'a t = (Key.t ref*'a item) list ref
+
+  let gen_sym =
+    let count = ref 0 in
+    fun () -> count := !count+1; !count
+
+  let get { self } = self
+  let create () = ref []
+
+  let insert_item h k xi =
+    let rec insert_item k xi = function
+      | [] -> [(ref k,xi)]
+      | (ka,ai)::l ->
+        if Key.compare k !ka <= 0 then (ref k,xi)::(ka,ai)::l
+        else (ka,ai)::insert_item k xi l
+    in
+    h := insert_item k xi !h
+
+  let insert h k x =
+    let xi = { self=x ; id=gen_sym() } in
+    let () = insert_item h k xi in
+    xi
+
+  let merge h1 h2 =
+    let () = List.iter (fun (k,xi) -> insert_item h1 !k xi) !h2 in
+    h2 := []
+
+  let find_min h =
+    match !h with
+    | [] -> None
+    | (_,xi)::_ -> Some xi
+
+  let delete_min h =
+    match !h with
+    | [] -> ()
+    | _::l -> h := l
+
+  let decrease_key h xi k =
+    let (rk,_) = List.find (fun (_,yi) -> xi == yi) !h in
+    rk := k
+
+end
+
+module RunReference = Run(Reference)
+
+let compare_impl
+    (module H1 : HollowHeap.S with type key=Key.t)
+    (module H2 : HollowHeap.S with type key=Key.t)
+    ops =
+  let module RunH1 = Run(H1) in
+  let module RunH2 = Run(H2) in
+  let map f = function
+    | Some x -> Some (f x)
+    | None -> None
+  in
+  H1.(RunH1.f ops |> find_min |> map get) = H2.(RunH2.f ops |> find_min |> map get)
+
+let functional_correctness =
+  "Functional_correctness" >::: QCheck_runner.to_ounit2_test_list QCheck.Test.[
+      make ~name:"Compare to reference implementation" (arb_ops 300)
+        (compare_impl (module BlackBox) (module Reference));
+    ]
+
+
+(** {6 Running the tests} *)
+
 let () =
   run_test_tt_main @@ test_list [
     heap_invariants;
+    functional_correctness;
   ]
