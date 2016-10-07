@@ -1,0 +1,6 @@
+"src": include
+
+true: bin_annot
+true: debug
+
+<test/**>: package(oUnit,qcheck)
