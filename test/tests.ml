@@ -1,11 +1,11 @@
 
-module Int = struct
+module Key = struct
   type t = int
   let compare = (Pervasives.compare:int->int->int)
 end
 
-module BlackBox = HollowHeap.Make(Int)
-module GlassBox = HollowHeapInternal.Make(Int)
+module BlackBox = HollowHeap.Make(Key)
+module GlassBox = HollowHeapInternal.Make(Key)
 
 type op =
   | Insert of int*int
@@ -64,10 +64,31 @@ module RunGlassBox = Run(GlassBox)
 
 open OUnit2
 
-
 let heap_invariants =
-  "Heap invariants" >::: QCheck_runner.to_ounit2_test_list QCheck.Test.[
-    make ~name:"No assert failure" (arb_ops 300) (fun ops -> let _ = RunGlassBox.f ops in true)
+  let open GlassBox in
+
+  let heap_invariant h =
+    let rec heap_inariant_node u k =
+      let open Node in
+      match u.elt with
+      | Full (ku,_) when Key.compare ku k >= 0 ->
+        List.for_all (fun v -> heap_inariant_node v ku) u.children
+      | Full _ -> false
+      | Hollow ->
+        List.for_all (fun v -> heap_inariant_node v k) u.children
+    in
+    match !h with
+    | None -> true
+    | Some u -> heap_inariant_node u min_int
+  in
+
+  let make ~name inv =
+    QCheck.Test.make ~name (arb_ops 300) (fun ops -> inv (RunGlassBox.f ops))
+  in
+
+  "Heap invariants" >::: QCheck_runner.to_ounit2_test_list [
+    make ~name:"No assert failure" (fun _ -> true);
+    make ~name:"Heap invariant" heap_invariant;
   ]
 
 let () =
