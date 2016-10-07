@@ -106,6 +106,21 @@ let heap_invariants =
     | Some u -> full_node_one_parent u
   in
 
+  (** The back pointer of an item is indeed its containing node. *)
+  let item_back_pointer h =
+    let rec item_back_pointer_node u =
+      let open Node in
+      begin match u.elt with
+        | Full (_,xi) -> xi.node == u
+        | Hollow -> true
+      end &&
+      List.for_all item_back_pointer_node u.children
+    in
+    match !h with
+    | None -> true
+    | Some u -> item_back_pointer_node u
+  in
+
 
   let make ~name inv =
     QCheck.Test.make ~name (arb_ops 300) (fun ops -> inv (RunGlassBox.f ops))
@@ -117,6 +132,7 @@ let heap_invariants =
     make ~name:"Heap invariant" heap_invariant;
     make ~name:"Root is full" root_invariant;
     make ~name:"Full nodes have at most one parent" full_node_one_parent;
+    make ~name:"Item back-pointers correct" item_back_pointer;
   ]
 
 let () =
