@@ -67,7 +67,7 @@ open OUnit2
 let heap_invariants =
   let open GlassBox in
 
-  (** The tree has the min-heap property. *)
+  (** The dag has the min-heap property. *)
   let heap_invariant h =
     let rec heap_inariant_node u k =
       let open Node in
