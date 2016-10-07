@@ -160,7 +160,7 @@ module Reference = struct
       distincts. *)
   type 'a item = { self:'a ; id:int ; heap: 'a t; mutable live:bool }
   (** The list is assumed sorted with respect to keys. *)
-  and 'a t = (Key.t ref*'a item) list ref
+  and 'a t = (Key.t*'a item) list ref
 
   let gen_sym =
     let count = ref 0 in
@@ -169,16 +169,16 @@ module Reference = struct
   let get { self } = self
   let get_key ({ heap } as xi) =
     let (rk,_) = List.find (fun (_,yi) -> xi == yi) !heap in
-    !rk
+    rk
   let live { live } = live
 
   let create () = ref []
 
   let insert_item h k xi =
     let rec insert_item k xi = function
-      | [] -> [(ref k,xi)]
+      | [] -> [(k,xi)]
       | (ka,ai)::l ->
-        if Key.compare k !ka <= 0 then (ref k,xi)::(ka,ai)::l
+        if Key.compare k ka <= 0 then (k,xi)::(ka,ai)::l
         else (ka,ai)::insert_item k xi l
     in
     h := insert_item k xi !h
@@ -189,7 +189,7 @@ module Reference = struct
     xi
 
   let merge h1 h2 =
-    let () = List.iter (fun (k,xi) -> insert_item h1 !k xi) !h2 in
+    let () = List.iter (fun (k,xi) -> insert_item h1 k xi) !h2 in
     h2 := []
 
   let find_min h =
@@ -205,8 +205,11 @@ module Reference = struct
       xi.live <- false
 
   let decrease_key h xi k =
-    let (rk,_) = List.find (fun (_,yi) -> xi == yi) !h in
-    rk := k
+    match List.partition (fun (_,yi) -> xi == yi) !h with
+    | [_,xi] , h' ->
+      h := h';
+      insert_item h k xi
+    | _ -> assert false
 
 end
 
