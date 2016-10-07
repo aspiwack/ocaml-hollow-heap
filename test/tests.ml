@@ -204,7 +204,9 @@ let compare_impl
     | Some x -> Some (f x)
     | None -> None
   in
-  H1.(RunH1.f ops |> find_min |> map get) = H2.(RunH2.f ops |> find_min |> map get)
+  (* Compares the keys rather than the values because find_min can
+     output _any_ of the items with minimum key. *)
+  H1.(RunH1.f ops |> find_min |> map get_key) = H2.(RunH2.f ops |> find_min |> map get_key)
 
 let functional_correctness =
   "Functional_correctness" >::: QCheck_runner.to_ounit2_test_list QCheck.Test.[
