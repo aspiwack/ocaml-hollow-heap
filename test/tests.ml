@@ -228,7 +228,7 @@ let compare_impl
   H1.(RunH1.f ops |> find_min |> map get_key) = H2.(RunH2.f ops |> find_min |> map get_key)
 
 let functional_correctness =
-  "Functional_correctness" >::: QCheck_runner.to_ounit2_test_list QCheck.Test.[
+  "Functional_correctness" >::: QCheck_runner.to_ounit2_test_list ~rand:(Random.State.make_self_init ()) QCheck.Test.[
       make ~name:"Compare to reference implementation" (arb_ops 300)
         (compare_impl (module BlackBox) (module Reference));
     ]
@@ -239,5 +239,10 @@ let functional_correctness =
 let () =
   run_test_tt_main @@ test_list [
     heap_invariants;
-    functional_correctness;
+    (* Deactivated because sequences of actions will not yield the
+       same results in case where several items have the same key
+       ([delete_min] will delete an implementation-dependent one of them,
+       then [decrease_key] will have a different effect depending on
+       which item was deleted). *)
+    (* functional_correctness; *)
   ]
