@@ -157,7 +157,7 @@ module Make (Ord:Map.OrderedType) = struct
 
     (** This function is described in Section 6 of the original
         article. *)
-    let delete_min h =
+    let delete_min u =
       (* Full should be a resizable array, but as a first
          approximation, since it's in the stdlib, I'm using a hash table
          instead. *)
@@ -197,10 +197,10 @@ module Make (Ord:Map.OrderedType) = struct
               | None -> triage (c::hollow) root rest
               | Some u when u==root -> (* [root] is the second parent *)
                 assert (rest==[]);
-                u.sp <- None;
+                c.sp <- None;
                 hollow
               | Some u -> (* [root] is the first parent. *)
-                u.sp <- None;
+                c.sp <- None;
                 triage hollow root rest
           end
       in
@@ -213,7 +213,7 @@ module Make (Ord:Map.OrderedType) = struct
           process_hollow hollow
       in
       let () =
-        match h.elt with
+        match u.elt with
         | Full (_,xi) ->
           (* [xi] is being removed from [h], so it's not live
              anymore. *)
@@ -222,7 +222,7 @@ module Make (Ord:Map.OrderedType) = struct
           xi.node <- dummy_node ();
         | Hollow -> assert false
       in
-      let hollow = triage [] h h.children in
+      let hollow = triage [] u u.children in
       process_hollow hollow
 
   end
