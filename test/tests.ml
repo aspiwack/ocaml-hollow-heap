@@ -205,11 +205,9 @@ module Reference = struct
       xi.live <- false
 
   let decrease_key h xi k =
-    match List.partition (fun (_,yi) -> xi == yi) !h with
-    | [_,xi] , h' ->
-      h := h';
-      insert_item h k xi
-    | _ -> assert false
+    let h' = List.filter (fun (_,yi) -> not (xi==yi)) !h in
+    let () = h := h' in
+    insert_item h k xi
 
 end
 
