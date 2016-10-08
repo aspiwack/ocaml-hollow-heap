@@ -126,7 +126,7 @@ module Make (Ord:Map.OrderedType) = struct
 
     let insert u k x =
       let (xi,v) = make k x in
-      xi , merge u v
+      xi , merge v u
 
     let find_min u =
       (* Remark: it is an invariant of nodes that the root is always
