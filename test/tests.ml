@@ -29,20 +29,50 @@ let gen_ops n =
   in
   list_size (0--n) gen_op
 
-let arb_ops n : op list QCheck.arbitrary =
-  let shrink_op o =
-    let open QCheck.Iter in
-    match o with
-    | Insert (k,x) ->
-      return (fun k x -> Insert (k,x)) <*> QCheck.Shrink.int k <*> QCheck.Shrink.int x
-    | DeleteMin -> empty
-    | DecreaseKey (i,k) ->
-      return (fun i k -> DecreaseKey (i,k)) <*> QCheck.Shrink.int i <*> QCheck.Shrink.int k
+(* The generator produces a more stable sequence of actions for
+   comparison of implementation. In case where several items have the
+   same key, [delete_min] will delete an implementation-dependent one
+   of them, then [decrease_key] will have a different effect depending
+   on which item was deleted, and one may end up even with heaps of
+   different size. Instead, in this generator, we do all the
+   [decrease_key] before any [delete_min]. This is not as random a
+   sequence of action, but it should go a long way to stress the
+   implementation. *)
+let gen_ops_stable n =
+  let open QCheck.Gen in
+  let gen_op_decrease =
+    frequency
+      [ 2, return (fun k x -> Insert (k,x)) <*> small_int <*> small_int
+      ; 1, return (fun i k -> DecreaseKey (i,k)) <*> small_int <*> small_int
+      ]
   in
-  let shrink =
-    QCheck.Shrink.list ~shrink:shrink_op in
+  let gen_op_delete =
+    frequency
+      [ 2, return (fun k x -> Insert (k,x)) <*> small_int <*> small_int
+      ; 1, return DeleteMin
+      ]
+  in
+  map2 (@) (list_size (0--n/2) gen_op_decrease) (list_size (0--n/2) gen_op_delete)
+
+let shrink_op o =
+  let open QCheck.Iter in
+  match o with
+  | Insert (k,x) ->
+    return (fun k x -> Insert (k,x)) <*> QCheck.Shrink.int k <*> QCheck.Shrink.int x
+  | DeleteMin -> empty
+  | DecreaseKey (i,k) ->
+    return (fun i k -> DecreaseKey (i,k)) <*> QCheck.Shrink.int i <*> QCheck.Shrink.int k
+
+let arb_ops n : op list QCheck.arbitrary =
+  let shrink = QCheck.Shrink.list ~shrink:shrink_op in
   let print = QCheck.Print.list op_pp in
-QCheck.make ~shrink ~print (gen_ops n)
+  QCheck.make ~shrink ~print (gen_ops n)
+
+let arb_ops_stable n : op list QCheck.arbitrary =
+  let shrink = QCheck.Shrink.list ~shrink:shrink_op in
+  let print = QCheck.Print.list op_pp in
+  QCheck.make ~shrink ~print (gen_ops_stable n)
+
 
 module Run (H : HollowHeap.S with type key = Key.t) = struct
 
@@ -228,8 +258,8 @@ let compare_impl
   H1.(RunH1.f ops |> find_min |> map get_key) = H2.(RunH2.f ops |> find_min |> map get_key)
 
 let functional_correctness =
-  "Functional_correctness" >::: QCheck_runner.to_ounit2_test_list ~rand:(Random.State.make_self_init ()) QCheck.Test.[
-      make ~name:"Compare to reference implementation" (arb_ops 300)
+  "Functional_correctness" >::: QCheck_runner.to_ounit2_test_list QCheck.Test.[
+      make ~name:"Compare to reference implementation" (arb_ops_stable 300)
         (compare_impl (module BlackBox) (module Reference));
     ]
 
@@ -239,10 +269,5 @@ let functional_correctness =
 let () =
   run_test_tt_main @@ test_list [
     heap_invariants;
-    (* Deactivated because sequences of actions will not yield the
-       same results in case where several items have the same key
-       ([delete_min] will delete an implementation-dependent one of them,
-       then [decrease_key] will have a different effect depending on
-       which item was deleted). *)
-    (* functional_correctness; *)
+    functional_correctness;
   ]
