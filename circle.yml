@@ -27,4 +27,4 @@ test:
     - mkdir -p $CIRCLE_TEST_REPORTS/ounit
     - cp test-result.xml $CIRCLE_TEST_REPORTS/ounit
     # Exports documentation as an artifact
-    - cp -aT lib.docdir $CIRCLE_ARTIFACTS/doc
+    - cp -avT lib.docdir $CIRCLE_ARTIFACTS/doc
