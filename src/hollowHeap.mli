@@ -6,8 +6,9 @@
 
 module type S = sig
 
-  (** [key] is the type of {e keys} (a.k.a {e priorities}): elements
-      in the heap are ordered according to the order of their keys.  *)
+  (** [key] is the type of {e keys} (a.k.a. {e priorities}): elements
+      in the heap are ordered according to the order of their
+      keys.  *)
   type key
 
   (** An ['a item] is essentially an ['a]. It also represents its
