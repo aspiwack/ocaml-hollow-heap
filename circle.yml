@@ -39,7 +39,7 @@ deployment:
       - rm -f ~/gh-pages/$CIRCLE_BRANCH
       - mkdir -p ~/gh-pages/$CIRCLE_BRANCH
       - cp -v lib.docdir/* ~/gh-pages/$CIRCLE_BRANCH
-      - git add ~/gh-pages/$CIRCLE_BRANCH
+      - cd ~/gh-pages ; git add $CIRCLE_BRANCH
       # Don't fail if their is no change (API is unchanged)
-      - git commit -m "Update $CIRCLE_BRANCH doc by build $CIRCLE_BUILD_NUM" -m "[Continous Integration]($CIRCLE_BUILD_URL) compiled and published the latest documentation." -m "[skip ci]" || true
-      - git push
+      - cd ~/gh-pages ; git commit -m "Update $CIRCLE_BRANCH doc by build $CIRCLE_BUILD_NUM" -m "[Continous Integration]($CIRCLE_BUILD_URL) compiled and published the latest documentation." -m "[skip ci]" || true
+      - cd ~/gh-pages ; git push
