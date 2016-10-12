@@ -12,7 +12,9 @@ supposed to have very good performance.
 
 ## Status ##
 
-This package is still completely untested.
+This hasn't been used in practice, but the property-based testing run
+in CI exercises the API very well. This gives rather strong confidence
+in the correctness of the implementation.
 
 - [X] Type-checks
 - [X] API & code documentation
