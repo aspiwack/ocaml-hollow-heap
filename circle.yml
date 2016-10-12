@@ -28,3 +28,18 @@ test:
     - cp test-result.xml $CIRCLE_TEST_REPORTS/ounit
     # Exports documentation as an artifact
     - cp -v lib.docdir/* $CIRCLE_ARTIFACTS/
+
+deployment:
+  master_doc:
+    branch: master
+    command:
+      - cd ~ ; git clone -b gh-pages git@github.com:$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git gh-pages
+      - cd ~/gh-pages ; git config user.name "Auto-update"
+      - cd ~/gh-pages ; git config user.email "autoupdate@spiwack.net"
+      - rm -f ~/gh-pages/$CIRCLE_BRANCH
+      - mkdir -p ~/gh-pages/$CIRCLE_BRANCH
+      - cp -v lib.docdir/* ~/gh-pages/$CIRCLE_BRANCH
+      - git add ~/gh-pages/$CIRCLE_BRANCH
+      # Don't fail if their is no change (API is unchanged)
+      - git commit -m "Update $CIRCLE_BRANCH doc by build $CIRCLE_BUILD_NUM" -m "[Continous Integration]($CIRCLE_BUILD_URL) compiled and published the latest documentation." -m "[skip ci]" || true
+      - git push
