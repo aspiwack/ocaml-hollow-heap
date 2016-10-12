@@ -36,7 +36,7 @@ deployment:
       - cd ~ ; git clone -b gh-pages git@github.com:$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git gh-pages
       - cd ~/gh-pages ; git config user.name "Auto-update"
       - cd ~/gh-pages ; git config user.email "autoupdate@spiwack.net"
-      - rm -f ~/gh-pages/$CIRCLE_BRANCH
+      - rm -rf ~/gh-pages/$CIRCLE_BRANCH
       - mkdir -p ~/gh-pages/$CIRCLE_BRANCH
       - cp -v lib.docdir/* ~/gh-pages/$CIRCLE_BRANCH
       - cd ~/gh-pages ; git add $CIRCLE_BRANCH
