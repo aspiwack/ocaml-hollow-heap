@@ -16,7 +16,10 @@ test:
     # All the warnings are fatal in CI. They are not fatal in the
     # `_tags` so that releases can compile with newer versions of the
     # compiler which have more warnings.
-    - eval `opam config env` ; ocamlbuild -tag "warn_error(+a)" -classic-display test/tests.byte -- -output-junit-file test-result.xml
+    - eval `opam config env` ; ocamlbuild -tag "warn_error(+a)" -classic-display test/tests.byte
+    # Compile a second time, without the warning activated: if warning
+    # fails, this will still give meaningful results.
+    - eval `opam config env` ; ocamlbuild -tag -classic-display test/tests.byte -- -output-junit-file test-result.xml
   post:
     # Report test result in junit format
     - mkdir -p $CIRCLE_TEST_REPORTS/ounit
