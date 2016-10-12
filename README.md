@@ -1,6 +1,8 @@
 Hollow heap
 ===========
 
+[![CircleCI](https://circleci.com/gh/aspiwack/ocaml-hollow-heap.svg?style=svg)](https://circleci.com/gh/aspiwack/ocaml-hollow-heap)
+
 This repository contains an implementation
 of [hollow heaps](http://cs.au.dk/~tdh/papers/Hollow-heaps.pdf) in
 Ocaml.
