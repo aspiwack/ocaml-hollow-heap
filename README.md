@@ -12,6 +12,11 @@ Hollow heaps are an imperative brand of heaps with O(1) `insert`,
 `delete_min`). It has a relatively simple implementation, and is
 supposed to have very good performance.
 
+## Documentation ##
+
+The documentation of the latest development version can be found at
+https://aspiwack.github.io/ocaml-hollow-heap/master/ .
+
 ## Thoughts about hollow heap ##
 
 The hollow heap data structure implemented in this repository was
@@ -35,7 +40,7 @@ in the correctness of the implementation.
 - [X] Type-checks
 - [X] API & code documentation
 - [X] Tests & CI
-- [ ] Publish API documentation
+- [X] Publish API documentation
 - [ ] Benchmark
 - [ ] Package to Opam
 
