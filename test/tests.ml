@@ -196,11 +196,11 @@ module Reference = struct
     let count = ref 0 in
     fun () -> count := !count+1; !count
 
-  let get { self } = self
-  let get_key ({ heap } as xi) =
+  let get { self ; _ } = self
+  let get_key ({ heap ; _ } as xi) =
     let (rk,_) = List.find (fun (_,yi) -> xi == yi) !heap in
     rk
-  let live { live } = live
+  let live { live ; _ } = live
 
   let create () = ref []
 

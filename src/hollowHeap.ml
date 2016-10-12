@@ -135,7 +135,7 @@ module Make (Ord:Map.OrderedType) = struct
       | Full (_,xi) -> xi
       | _ -> assert false
 
-    let decrease_key ({ node=u } as xi) k h =
+    let decrease_key ({ node=u ; _ } as xi) k h =
       if u == h then
         let () = update_key h k in
         h
@@ -199,7 +199,7 @@ module Make (Ord:Map.OrderedType) = struct
                 assert (rest==[]);
                 c.sp <- None;
                 hollow
-              | Some u -> (* [root] is the first parent. *)
+              | Some _u -> (* [root] is the first parent. *)
                 c.sp <- None;
                 triage hollow root rest
           end
@@ -229,14 +229,14 @@ module Make (Ord:Map.OrderedType) = struct
 
   type 'a item = 'a Node.item
 
-  let get { Node.self } = self
+  let get { Node.self ; _ } = self
 
-  let get_key { Node.node=u } =
+  let get_key { Node.node=u ; _ } =
     match u.Node.elt with
     | Full(k,_) -> k
     | Hollow -> assert false
 
-  let live { Node.live } = live
+  let live { Node.live ; _ } = live
 
   type 'a t = 'a Node.t option ref
 

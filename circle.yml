@@ -13,7 +13,10 @@ dependencies:
     - "~/.opam"
 test:
   override:
-    - eval `opam config env` ; ocamlbuild -classic-display test/tests.byte -- -output-junit-file test-result.xml
+    # All the warnings are fatal in CI. They are not fatal in the
+    # `_tags` so that releases can compile with newer versions of the
+    # compiler which have more warnings.
+    - eval `opam config env` ; ocamlbuild -tag "warn_error(+a)" -classic-display test/tests.byte -- -output-junit-file test-result.xml
   post:
     # Report test result in junit format
     - mkdir -p $CIRCLE_TEST_REPORTS/ounit
