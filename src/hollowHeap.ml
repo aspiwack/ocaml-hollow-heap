@@ -40,10 +40,11 @@ module Make (Ord:Map.OrderedType) = struct
       (** [rank] is used to guide the linking strategy during
           deletes. It is a non-negative int. *)
       mutable rank : int;
-      (** [sp] is the "second parent" of this node if it has one
-          (second parents are inserted by {!link_above}, itself called
-          in {!decrease_key}).*)
-      mutable sp : 'a t option;
+      (** [sp] is [true] iff this node has a "second parent" (second
+          parents are inserted by {!link_above}, itself called in
+          {!decrease_key}). This boolean serves as a reference counter
+          in {!delete}. *)
+      mutable sp : bool;
     }
     (** ['a item] point back to the node which hold them. They are
         used by {!decrease_key} to find the node whose key to
@@ -58,12 +59,12 @@ module Make (Ord:Map.OrderedType) = struct
        safe, but presumably slow. It is probably desirable to use
        unsafe features (beware of not breaking flambda though) for the
        sake of efficiency. *)
-    let dummy_node () = { elt = Hollow ; children = [] ; rank = 0 ; sp = None }
+    let dummy_node () = { elt = Hollow ; children = [] ; rank = 0 ; sp = false }
 
     (** Creates and returns a new node with item [xi] in it. Enforces
         the invariant that [xi] points back to that node. *)
     let make_with ?(rank=0) k xi =
-      let u = { elt = Full (k,xi); children = [] ; rank ; sp = None } in
+      let u = { elt = Full (k,xi); children = [] ; rank ; sp = false } in
       let () = xi.node <- u in
       u
 
@@ -101,7 +102,7 @@ module Make (Ord:Map.OrderedType) = struct
         if ku >= kv then
           let () = v.children <- u::v.children in
           let () = u.children <- w::u.children in
-          let () = w.sp <- Some u in
+          let () = w.sp <- true in
           v
         else
           let () = u.children <- v::u.children in
@@ -187,21 +188,15 @@ module Make (Ord:Map.OrderedType) = struct
               let () = push c in
               triage hollow root rest
             | Hollow ->
-              (* TODO: in this presentation, it seems that this could
-                 be simplified: we only need to "reference count" the
-                 parents (since there is at most two parents, we only
-                 need a boolean) instead of keeping a "second parent
-                 pointer". Indeed the two last branch seem to do the
-                 exact same thing. *)
+              (* If it had a single parent ([root]), then [c] must be
+                 deleted. Otherwise, it has anoter parent and need not be
+                 deleted right away (it is not a root). *)
               match c.sp with
-              | None -> triage (c::hollow) root rest
-              | Some u when u==root -> (* [root] is the second parent *)
-                assert (rest==[]);
-                c.sp <- None;
-                hollow
-              | Some _u -> (* [root] is the first parent. *)
-                c.sp <- None;
+              | false -> triage (c::hollow) root rest
+              | true ->
+                c.sp <- false;
                 triage hollow root rest
+
           end
       in
       let rec process_hollow hollow =

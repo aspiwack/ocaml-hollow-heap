@@ -144,7 +144,7 @@ let heap_invariants =
     let rec full_node_one_parent u =
       let open Node in
       match u.elt , u.sp with
-      | Full _ , Some _ -> false
+      | Full _ , true -> false
       | _ -> List.for_all full_node_one_parent u.children
     in
     match !h with
