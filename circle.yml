@@ -1,3 +1,8 @@
+general:
+  branches:
+    ignore:
+      - gh-pages
+
 machine:
   environment:
     OCAML_VERSION: 4.02.3
@@ -41,7 +46,7 @@ deployment:
       - cp -v lib.docdir/* ~/gh-pages/$CIRCLE_BRANCH
       - cd ~/gh-pages ; git add $CIRCLE_BRANCH
       # Don't fail if their is no change (API is unchanged)
-      - cd ~/gh-pages ; git commit -m "Update $CIRCLE_BRANCH doc by build $CIRCLE_BUILD_NUM" -m "[Continous Integration]($CIRCLE_BUILD_URL) compiled and published the latest documentation." -m "[skip ci]" || true
+      - cd ~/gh-pages ; git commit -m "Update $CIRCLE_BRANCH doc by build $CIRCLE_BUILD_NUM" -m "[Continous Integration]($CIRCLE_BUILD_URL) compiled and published the latest documentation." || true
       - cd ~/gh-pages ; git push
   tag_doc:
     tag: /.*/
@@ -55,5 +60,5 @@ deployment:
       - cp -v lib.docdir/* ~/gh-pages/$CIRCLE_TAG
       - cd ~/gh-pages ; git add $CIRCLE_TAG
       # Don't fail if their is no change (API is unchanged, shouldn't happen with tags)
-      - cd ~/gh-pages ; git commit -m "Create tag/$CIRCLE_TAG doc by build $CIRCLE_BUILD_NUM" -m "[Continous Integration]($CIRCLE_BUILD_URL) compiled and published the documentation for tag $CIRCLE_TAG." -m "[skip ci]" || true
+      - cd ~/gh-pages ; git commit -m "Create tag/$CIRCLE_TAG doc by build $CIRCLE_BUILD_NUM" -m "[Continous Integration]($CIRCLE_BUILD_URL) compiled and published the documentation for tag $CIRCLE_TAG." -m || true
       - cd ~/gh-pages ; git push
