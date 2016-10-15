@@ -96,6 +96,13 @@ The type of heaps. Note that these are mutable heaps.<br>
 <pre><span id="VALdecrease_key"><span class="keyword">val</span> decrease_key</span> : <code class="type">'a <a href="HollowHeap.S.html#TYPEt">t</a> -> 'a <a href="HollowHeap.S.html#TYPEitem">item</a> -> <a href="HollowHeap.S.html#TYPEkey">key</a> -> unit</code></pre><div class="info ">
 <code class="code">decrease_key h xi k</code> changes the key of the element of <code class="code">h</code>
       pointed to by <code class="code">xi</code> to <code class="code">k</code>. Precondition <code class="code">k</code> must be no greater
-      than the current key of <code class="code">xi</code> (hence <em>decrease</em>).<br>
+      than the current key of <code class="code">xi</code> (hence <em>decrease</em>). It is an
+      error to call <code class="code">decrease_key</code> when <code class="code">xi</code> is not <a href="HollowHeap.S.html#VALlive"><code class="code">HollowHeap.S.live</code></a>.<br>
+</div>
+
+<pre><span id="VALdelete"><span class="keyword">val</span> delete</span> : <code class="type">'a <a href="HollowHeap.S.html#TYPEt">t</a> -> 'a <a href="HollowHeap.S.html#TYPEitem">item</a> -> unit</code></pre><div class="info ">
+<code class="code">delete h xi</code> removes the element of <code class="code">h</code> pointed to by <code class="code">xi</code> from
+      <code class="code">h</code>. It is an error to call <code class="code">delete</code> when <code class="code">xi</code> is not
+      <a href="HollowHeap.S.html#VALlive"><code class="code">HollowHeap.S.live</code></a>.<br>
 </div>
 </body></html>
