@@ -18,7 +18,7 @@ let op_pp = function
   | Insert (k,x) -> Printf.sprintf "insert(%d,%d)" k x
   | DeleteMin -> Printf.sprintf "delete_min"
   | DecreaseKey (i,k) -> Printf.sprintf "decrease_key(%d,%d)" i k
-  | Delete i -> Printf.sprintf "decrease_key %d" i
+  | Delete i -> Printf.sprintf "delete %d" i
 
 let gen_ops n =
   let open QCheck.Gen in
