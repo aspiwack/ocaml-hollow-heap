@@ -1,0 +1,28 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="HollowHeap" rel="Chapter" href="HollowHeap.html"><title>HollowHeap</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;</div>
+<h1>Module <a href="type_HollowHeap.html">HollowHeap</a></h1>
+
+<pre><span class="keyword">module</span> HollowHeap: <code class="code">sig</code> <a href="HollowHeap.html">..</a> <code class="code">end</code></pre><div class="info module top">
+This module is an implementation of
+    <a href="http://cs.au.dk/~tdh/papers/Hollow-heaps.pdf"> hollow heaps</a> a
+    mutable heap structure with O(1) <code class="code">decrease_key</code>. Only <code class="code">delete_min</code>
+    is not O(1).<br>
+</div>
+<hr width="100%">
+
+<pre><span class="keyword">module type</span> <a href="HollowHeap.S.html">S</a> = <code class="code">sig</code> <a href="HollowHeap.S.html">..</a> <code class="code">end</code></pre>
+<pre><span class="keyword">module</span> <a href="HollowHeap.Make.html">Make</a>: <div class="sig_block"><code class="code">functor (</code><code class="code">Ord</code><code class="code"> : </code><code class="type">Map.OrderedType</code><code class="code">) -&gt; </code><code class="type"><a href="HollowHeap.S.html">S</a></code><code class="type">  with type key = Ord.t</code></div></pre></body></html>
