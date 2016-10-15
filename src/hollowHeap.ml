@@ -189,7 +189,7 @@ module Make (Ord:Map.OrderedType) = struct
               triage hollow root rest
             | Hollow ->
               (* If it had a single parent ([root]), then [c] must be
-                 deleted. Otherwise, it has anoter parent and need not be
+                 deleted. Otherwise, it has another parent and need not be
                  deleted right away (it is not a root). *)
               match c.sp with
               | false -> triage (c::hollow) root rest
