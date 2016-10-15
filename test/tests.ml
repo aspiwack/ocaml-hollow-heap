@@ -11,20 +11,23 @@ type op =
   | Insert of int*int
   | DeleteMin
   | DecreaseKey of int*int (** Decrease the [i]-th inserted key which is still live. *)
+  | Delete of int (** Deletes the [i]-th inserted key which is still live. *)
 
 
 let op_pp = function
   | Insert (k,x) -> Printf.sprintf "insert(%d,%d)" k x
   | DeleteMin -> Printf.sprintf "delete_min"
   | DecreaseKey (i,k) -> Printf.sprintf "decrease_key(%d,%d)" i k
+  | Delete i -> Printf.sprintf "decrease_key %d" i
 
 let gen_ops n =
   let open QCheck.Gen in
   let gen_op =
     frequency
-      [ 2, return (fun k x -> Insert (k,x)) <*> small_int <*> small_int
+      [ 4, return (fun k x -> Insert (k,x)) <*> small_int <*> small_int
       ; 1, return DeleteMin
       ; 1, return (fun i k -> DecreaseKey (i,k)) <*> small_int <*> small_int
+      ; 1, return (fun i -> Delete i) <*> small_int
       ]
   in
   list_size (0--n) gen_op
@@ -48,8 +51,9 @@ let gen_ops_stable n =
   in
   let gen_op_delete =
     frequency
-      [ 2, return (fun k x -> Insert (k,x)) <*> small_int <*> small_int
+      [ 4, return (fun k x -> Insert (k,x)) <*> small_int <*> small_int
       ; 1, return DeleteMin
+      ; 1, return (fun i -> Delete i) <*> small_int
       ]
   in
   map2 (@) (list_size (0--n/2) gen_op_decrease) (list_size (0--n/2) gen_op_delete)
@@ -62,6 +66,8 @@ let shrink_op o =
   | DeleteMin -> empty
   | DecreaseKey (i,k) ->
     return (fun i k -> DecreaseKey (i,k)) <*> QCheck.Shrink.int i <*> QCheck.Shrink.int k
+  | Delete i ->
+    return (fun i -> Delete i) <*> QCheck.Shrink.int i
 
 let arb_ops n : op list QCheck.arbitrary =
   let shrink = QCheck.Shrink.list ~shrink:shrink_op in
@@ -92,6 +98,15 @@ module Run (H : HollowHeap.S with type key = Key.t) = struct
         | xi ->
           let k0 = H.get_key xi in
           let () = H.decrease_key h xi (min (k0-1) k) in
+          heap_ops filtered r
+        | exception _ ->
+          heap_ops filtered r
+        end
+      | Delete i::r ->
+        let filtered = List.filter H.live items in
+        begin match List.nth filtered i with
+        | xi ->
+          let () = H.delete h xi in
           heap_ops filtered r
         | exception _ ->
           heap_ops filtered r
@@ -238,6 +253,12 @@ module Reference = struct
     let h' = List.filter (fun (_,yi) -> not (xi==yi)) !h in
     let () = h := h' in
     insert_item h k xi
+
+  let delete h xi =
+    let h' = List.filter (fun (_,yi) -> not (xi==yi)) !h in
+    let () = h := h' in
+    let () = xi.live <- false in
+    ()
 
 end
 

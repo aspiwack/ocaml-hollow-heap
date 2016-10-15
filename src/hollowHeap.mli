@@ -56,6 +56,11 @@ module type S = sig
       error to call [decrease_key] when [xi] is not {!live}.*)
   val decrease_key : 'a t -> 'a item -> key -> unit
 
+  (** [delete h xi] removes the element of [h] pointed to by [xi] from
+      [h]. It is an error to call [delete] when [xi] is not
+      {!live}. *)
+  val delete : 'a t -> 'a item -> unit
+
 end
 
 module Make (Ord:Map.OrderedType) : S with type key = Ord.t

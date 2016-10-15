@@ -14,6 +14,7 @@ module type S = sig
   val find_min : 'a t -> 'a item option
   val delete_min : 'a t -> unit
   val decrease_key : 'a t -> 'a item -> key -> unit
+  val delete : 'a t -> 'a item -> unit
 
 end
 
@@ -121,7 +122,7 @@ module Make (Ord:Map.OrderedType) = struct
         u.elt <- Full (k,xi)
       | _ -> assert false
 
-    (** {6 Heap operations (except delete-min)} *)
+    (** {6 Basic heap operations (except delete-min)} *)
 
     let merge = link
 
@@ -220,6 +221,16 @@ module Make (Ord:Map.OrderedType) = struct
       let hollow = triage [] u u.children in
       process_hollow hollow
 
+    (** {6 Additional operations} *)
+
+
+    let delete ({ node=u ; _ } as xi) h =
+      if u == h then
+        delete_min h
+      else
+        let () = u.elt <- Hollow in
+        let () = xi.live <- false in
+        Some h
   end
 
   type 'a item = 'a Node.item
@@ -275,5 +286,10 @@ module Make (Ord:Map.OrderedType) = struct
     match !h with
     | None -> assert false
     | Some u -> h := Some (Node.decrease_key xi k u)
+
+  let delete h xi =
+    match !h with
+    | None -> assert false
+    | Some u -> h := Node.delete xi u
 
 end
