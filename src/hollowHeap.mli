@@ -52,7 +52,8 @@ module type S = sig
 
   (** [decrease_key h xi k] changes the key of the element of [h]
       pointed to by [xi] to [k]. Precondition [k] must be no greater
-      than the current key of [xi] (hence {e decrease}). *)
+      than the current key of [xi] (hence {e decrease}). It is an
+      error to call [decrease_key] when [xi] is not {!live}.*)
   val decrease_key : 'a t -> 'a item -> key -> unit
 
 end
