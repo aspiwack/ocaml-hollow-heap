@@ -43,3 +43,17 @@ deployment:
       # Don't fail if their is no change (API is unchanged)
       - cd ~/gh-pages ; git commit -m "Update $CIRCLE_BRANCH doc by build $CIRCLE_BUILD_NUM" -m "[Continous Integration]($CIRCLE_BUILD_URL) compiled and published the latest documentation." -m "[skip ci]" || true
       - cd ~/gh-pages ; git push
+  tag_doc:
+    tag: /.*/
+    owner: aspiwack
+    commands:
+      - cd ~ ; git clone -b gh-pages git@github.com:$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git gh-pages
+      - cd ~/gh-pages ; git config user.name "Auto-update"
+      - cd ~/gh-pages ; git config user.email "autoupdate@spiwack.net"
+      - rm -rf ~/gh-pages/$CIRCLE_TAG
+      - mkdir -p ~/gh-pages/$CIRCLE_TAG
+      - cp -v lib.docdir/* ~/gh-pages/$CIRCLE_TAG
+      - cd ~/gh-pages ; git add $CIRCLE_TAG
+      # Don't fail if their is no change (API is unchanged, shouldn't happen with tags)
+      - cd ~/gh-pages ; git commit -m "Create tag/$CIRCLE_TAG doc by build $CIRCLE_BUILD_NUM" -m "[Continous Integration]($CIRCLE_BUILD_URL) compiled and published the documentation for tag $CIRCLE_TAG." -m "[skip ci]" || true
+      - cd ~/gh-pages ; git push
