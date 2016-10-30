@@ -28,9 +28,13 @@ let empty dummy capacity = {
 exception NoElem
 
 let find {arr;dummy;_} i =
+  let () = if i >= Array.length arr then raise NoElem in
   let r = arr.(i) in
   if r != dummy then r
   else raise NoElem
+
+let mem  {arr;dummy;_} i =
+  (i < Array.length arr) && (arr.(i) != dummy)
 
 (* Extend the capacity of [a] so that it has capacity at least [n]
    elements. *)

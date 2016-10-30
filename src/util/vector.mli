@@ -23,6 +23,8 @@ exception NoElem
     @raise NoElem when there is no binding for [i] in [a]. *)
 val find : 'a t -> int -> 'a
 
+val mem : 'a t -> int -> bool
+
 (** [add a i x] adds [(i,x)] as a binding in [a]. If there was a
     previous binding for [i] then it is erased. *)
 val add : 'a t -> int -> 'a -> unit

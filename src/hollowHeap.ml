@@ -167,11 +167,11 @@ module Make (Ord:Map.OrderedType) = struct
         Vector.fold1 (fun h acc -> link h acc) full
       in
       let rec push h =
-        match Vector.find full h.rank with
-        | u ->
-          Vector.remove full h.rank;
+        if Vector.mem full h.rank then
+          let u = Vector.find full h.rank in
+          let () = Vector.remove full h.rank in
           push (rank_link h u)
-        | exception Vector.NoElem ->
+        else
           Vector.add full h.rank h
       in
       let rec triage hollow root = function
