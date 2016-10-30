@@ -160,26 +160,19 @@ module Make (Ord:Map.OrderedType) = struct
     (** This function is described in Section 6 of the original
         article. *)
     let delete_min u =
-      (* Full should be a resizable array, but as a first
-         approximation, since it's in the stdlib, I'm using a hash table
-         instead. *)
-      let full = Hashtbl.create 42 in
-      let merge_left h = function
-        | None -> h
-        | Some u -> link h u
-      in
+      let full = Vector.empty (dummy_node ())42 in
       let link_all () =
         (* There is a lot of useless boxing here. Maybe there is a way
            to make it shorter. *)
-        Hashtbl.fold (fun _ h acc -> Some (merge_left h acc)) full None
+        Vector.fold1 (fun h acc -> link h acc) full
       in
       let rec push h =
-        match Hashtbl.find full h.rank with
+        match Vector.find full h.rank with
         | u ->
-          Hashtbl.remove full h.rank;
+          Vector.remove full h.rank;
           push (rank_link h u)
-        | exception Not_found ->
-          Hashtbl.add full h.rank h
+        | exception Vector.NoElem ->
+          Vector.add full h.rank h
       in
       let rec triage hollow root = function
         | [] -> hollow

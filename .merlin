@@ -1,5 +1,7 @@
 S src
 B _build/src
+S src/util
+B _build/src/util
 
 FLG -w +a-50-4-48@8
 

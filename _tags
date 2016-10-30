@@ -1,4 +1,5 @@
 "src": include
+"src/util": include
 
 true: bin_annot, warn(+a-50-4-48@8)
 true: debug
