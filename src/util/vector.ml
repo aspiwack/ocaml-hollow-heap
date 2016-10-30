@@ -49,7 +49,7 @@ let extend a n =
 let add a i v =
   let () = extend a (i+1) in
   let () = a.arr.(i) <- v in
-  a.last_index <- max (a.last_index) i
+  if i > a.last_index then a.last_index <- i
 
 (* Search backwards in mask (from i) to find the last [true]
    bit. There are more efficient implementations of this function. *)
