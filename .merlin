@@ -5,3 +5,5 @@ FLG -w +a-50-4-48@8
 
 PKG oUnit
 PKG qcheck
+
+PKG core_bench
