@@ -160,7 +160,7 @@ module Make (Ord:Map.OrderedType) = struct
     (** This function is described in Section 6 of the original
         article. *)
     let delete_min u =
-      let full = Vector.empty (dummy_node ())42 in
+      let full = Vector.empty (dummy_node ()) 8 in
       let link_all () =
         (* There is a lot of useless boxing here. Maybe there is a way
            to make it shorter. *)
