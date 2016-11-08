@@ -81,7 +81,7 @@ module Make (Ord:Map.OrderedType) = struct
       (* Remark: it is an invariant of nodes that the root is always full. *)
       match u.elt , v.elt with
       | Full (ku,_), Full (kv,_) ->
-        if ku >= kv then
+        if Ord.compare ku kv >= 0 then
           let () = v.children <- u::v.children in
           v
         else
@@ -100,7 +100,7 @@ module Make (Ord:Map.OrderedType) = struct
     let link_above w u v =
       match u.elt , v.elt with
       | Full (ku,_), Full (kv,_) ->
-        if ku >= kv then
+        if Ord.compare ku kv >= 0 then
           let () = v.children <- u::v.children in
           let () = u.children <- w::u.children in
           let () = w.sp <- true in
@@ -118,7 +118,7 @@ module Make (Ord:Map.OrderedType) = struct
          full.*)
       match u.elt with
       | Full (k0,xi) ->
-        assert (k0 >= k);
+        assert (Ord.compare k0 k >= 0);
         u.elt <- Full (k,xi)
       | _ -> assert false
 
