@@ -1,8 +1,11 @@
 
-module Key = struct
+module type Key = sig
   type t = int
-  let compare = (Pervasives.compare:int->int->int)
+  val compare : t -> t -> int
+  val name : string
 end
+
+module Test (Key:Key) = struct
 
 module BlackBox = HollowHeap.Make(Key)
 module GlassBox = HollowHeapInternal.Make(Key)
@@ -188,7 +191,7 @@ let heap_invariants =
   in
 
 
-  "Heap invariants" >::: QCheck_runner.to_ounit2_test_list [
+  (Format.sprintf "Heap invariants (%s)" Key.name) >::: QCheck_runner.to_ounit2_test_list [
     make ~name:"No assert failure" (fun _ -> true);
     make ~name:"Heap invariant" heap_invariant;
     make ~name:"Root is full" root_invariant;
@@ -279,16 +282,36 @@ let compare_impl
   H1.(RunH1.f ops |> find_min |> map get_key) = H2.(RunH2.f ops |> find_min |> map get_key)
 
 let functional_correctness =
-  "Functional_correctness" >::: QCheck_runner.to_ounit2_test_list QCheck.Test.[
+  (Format.sprintf "Functional_correctness (%s)" Key.name) >::: QCheck_runner.to_ounit2_test_list QCheck.Test.[
       make ~name:"Compare to reference implementation" (arb_ops_stable 300)
         (compare_impl (module BlackBox) (module Reference));
     ]
 
+end
 
 (** {6 Running the tests} *)
 
+module NatInt = struct
+  type t = int
+  let compare = (Pervasives.compare:int->int->int)
+  let name = "int, natord"
+end
+
+module RevInt = struct
+  type t = int
+  let compare x y = (Pervasives.compare:int->int->int) y x
+  let name = "int, revord"
+end
+
+module Test1 = Test(NatInt)
+module Test2 = Test(RevInt)
+
+open OUnit2
+
 let () =
   run_test_tt_main @@ test_list [
-    heap_invariants;
-    functional_correctness;
+    Test1.heap_invariants;
+    Test1.functional_correctness;
+    Test2.heap_invariants;
+    Test2.functional_correctness;
   ]
