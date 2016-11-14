@@ -3,6 +3,7 @@ module type Key = sig
   type t = int
   val compare : t -> t -> int
   val name : string
+  val decrease : int -> int -> int
 end
 
 module Test (Key:Key) = struct
@@ -100,7 +101,7 @@ module Run (H : HollowHeap.S with type key = Key.t) = struct
         begin match List.nth filtered i with
         | xi ->
           let k0 = H.get_key xi in
-          let () = H.decrease_key h xi (min (k0-1) k) in
+          let () = H.decrease_key h xi (Key.decrease k0 k) in
           heap_ops filtered r
         | exception _ ->
           heap_ops filtered r
@@ -295,12 +296,14 @@ module NatInt = struct
   type t = int
   let compare = (Pervasives.compare:int->int->int)
   let name = "int, natord"
+  let decrease k0 k = min (k0-1) k
 end
 
 module RevInt = struct
   type t = int
   let compare x y = (Pervasives.compare:int->int->int) y x
   let name = "int, revord"
+  let decrease k0 k = max (k0+1) k
 end
 
 module Test1 = Test(NatInt)
