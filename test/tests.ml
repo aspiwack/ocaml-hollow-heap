@@ -3,7 +3,8 @@ module type Key = sig
   type t = int
   val compare : t -> t -> int
   val name : string
-  val decrease : int -> int -> int
+  val decrease : t -> t -> int
+  val min_key : t
 end
 
 module Test (Key:Key) = struct
@@ -145,7 +146,7 @@ let heap_invariants =
     in
     match !h with
     | None -> true
-    | Some u -> heap_inariant_node u min_int
+    | Some u -> heap_inariant_node u Key.min_key
   in
 
   (** The root is always full. *)
@@ -297,6 +298,7 @@ module NatInt = struct
   let compare = (Pervasives.compare:int->int->int)
   let name = "int, natord"
   let decrease k0 k = min (k0-1) k
+  let min_key = min_int
 end
 
 module RevInt = struct
@@ -304,6 +306,7 @@ module RevInt = struct
   let compare x y = (Pervasives.compare:int->int->int) y x
   let name = "int, revord"
   let decrease k0 k = max (k0+1) k
+  let min_key = max_int
 end
 
 module Test1 = Test(NatInt)
